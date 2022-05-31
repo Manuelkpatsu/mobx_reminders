@@ -22,6 +22,9 @@ Future<String?> showTextFieldDialog({
         content: TextField(
           controller: controller,
           autofocus: true,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.done,
+          maxLines: null,
           decoration: InputDecoration(
             hintText: hintText,
           ),
