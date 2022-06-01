@@ -1,24 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobx_reminders/state/app_state.dart';
 
-import 'mocks/mock_auth_provider.dart';
-import 'mocks/mock_reminders_provider.dart';
+import 'mocks/mock_auth_service.dart';
+import 'mocks/mock_image_upload_service.dart';
+import 'mocks/mock_reminders_service.dart';
 
 void main() {
   late AppState appState;
 
   setUp(() {
     appState = AppState(
-      authProvider: MockAuthProvider(),
-      remindersProvider: MockRemindersProvider(),
+      authService: MockAuthService(),
+      remindersService: MockRemindersService(),
+      imageUploadService: MockImageUploadService(),
     );
   });
 
   test('Initial state', () {
     expect(appState.currentScreen, AppScreen.login);
-    expect(appState.authError, null);
-    expect(appState.isLoading, false);
-    expect(appState.reminders.isEmpty, true);
+    appState.authError.expectNull();
+    appState.isLoading.expectFalse();
+    appState.reminders.isEmpty.expectTrue();
   });
 
   test('Going to screens', () {
@@ -94,4 +96,54 @@ void main() {
     expect(appState.reminders.isEmpty, true);
     expect(appState.currentScreen, AppScreen.login);
   });
+
+  test('Uploading image for reminder', () async {
+    await appState.initialize();
+    final reminder = appState.reminders.firstWhere(
+      (element) => element.id == mockReminder1Id,
+    );
+    reminder.hasImage.expectFalse();
+    reminder.imageData.expectNull();
+
+    // fake upload image for this reminder
+    final couldUploadImage = await appState.upload(
+      filePath: 'dummy_path',
+      forReminderId: reminder.id,
+    );
+
+    couldUploadImage.expectTrue();
+    reminder.hasImage.expectTrue();
+    reminder.imageData.expectNull();
+
+    final imageData = await appState.getReminderImage(reminderId: reminder.id);
+    imageData.expectNotNull();
+    imageData!.isEqualTo(mockReminder1ImageData).expectTrue();
+  });
+}
+
+extension Expectations on Object? {
+  void expectNull() => expect(this, isNull);
+  void expectNotNull() => expect(this, isNotNull);
+}
+
+extension BoolExpectations on bool {
+  void expectTrue() => expect(this, true);
+  void expectFalse() => expect(this, false);
+}
+
+extension Comparison<E> on List<E> {
+  bool isEqualTo(List<E> other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (length != other.length) {
+      return false;
+    }
+    for (var i = 0; i < length; i++) {
+      if (this[i] != other[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
