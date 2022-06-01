@@ -6,7 +6,7 @@ import 'package:mobx_reminders/state/reminder.dart';
 
 typedef ReminderId = String;
 
-abstract class RemindersProvider {
+abstract class RemindersService {
   Future<void> deleteReminderWithId(ReminderId id, {required String userId});
   Future<void> deleteAllDocuments({required String userId});
   Future<ReminderId> createReminder({
@@ -30,7 +30,7 @@ abstract class RemindersProvider {
   });
 }
 
-class FirestoreRemindersProvider implements RemindersProvider {
+class FirestoreRemindersService implements RemindersService {
   @override
   Future<ReminderId> createReminder({
     required String userId,

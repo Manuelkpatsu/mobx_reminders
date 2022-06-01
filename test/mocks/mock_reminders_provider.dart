@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:mobx_reminders/provider/reminders_provider.dart';
+import 'package:mobx_reminders/services/reminders_service.dart';
 import 'package:mobx_reminders/state/reminder.dart';
 
 import '../utils.dart';
@@ -35,7 +35,7 @@ const mockReminderId = 'mockReminderId';
 
 final Iterable<Reminder> mockReminders = [mockReminder1, mockReminder2];
 
-class MockRemindersProvider implements RemindersProvider {
+class MockRemindersProvider implements RemindersService {
   @override
   Future<ReminderId> createReminder({
     required String userId,
