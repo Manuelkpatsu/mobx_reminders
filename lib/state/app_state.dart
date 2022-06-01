@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:mobx/mobx.dart';
 import 'package:mobx_reminders/auth/auth_error.dart';
 import 'package:mobx_reminders/provider/auth_provider.dart';
 import 'package:mobx_reminders/provider/reminders_provider.dart';
+import 'package:mobx_reminders/utils/upload_image.dart';
 
 import 'reminder.dart';
 
@@ -121,6 +125,7 @@ abstract class _AppState with Store {
       text: text,
       isDone: false,
       id: firebaseReminderId,
+      hasImage: false,
     );
     reminders.add(reminder);
     isLoading = false;
@@ -227,6 +232,68 @@ abstract class _AppState with Store {
         email: email,
         password: password,
       );
+
+  @action
+  Future<bool> upload({
+    required String filePath,
+    required ReminderId forReminderId,
+  }) async {
+    final userId = authProvider.userId;
+    if (userId == null) {
+      return false;
+    }
+
+    // set the reminder as loading while uploading the image
+    final reminder = reminders.firstWhere(
+      (element) => element.id == forReminderId,
+    );
+    reminder.isLoading = true;
+
+    final file = File(filePath);
+    final imageId = await uploadImage(
+      file: file,
+      userId: userId,
+      imageId: forReminderId,
+    );
+
+    if (imageId == null) {
+      reminder.isLoading = false;
+      return false;
+    }
+
+    await remindersProvider.setReminderHasImage(
+      reminderId: forReminderId,
+      userId: userId,
+    );
+
+    reminder.isLoading = false;
+    reminder.hasImage = true;
+    return true;
+  }
+
+  Future<Uint8List?> getReminderImage({
+    required ReminderId reminderId,
+  }) async {
+    final userId = authProvider.userId;
+    if (userId == null) {
+      return null;
+    }
+
+    final reminder = reminders.firstWhere(
+      (element) => element.id == reminderId,
+    );
+    final existingImageData = reminder.imageData;
+    if (existingImageData != null) {
+      return existingImageData;
+    }
+
+    final image = await remindersProvider.getReminderImage(
+      reminderId: reminderId,
+      userId: userId,
+    );
+    reminder.imageData = image;
+    return image;
+  }
 }
 
 typedef LoginOrRegisterFunction = Future<bool> Function({
